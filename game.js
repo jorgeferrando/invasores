@@ -16,4 +16,10 @@ function startGame() {
 	//blue semitransparent rectangle
 	ctx.fillStyle = "rgba(0,0,128,0.5)";
 	ctx.fillRect(0,50,380,400);
+
+	var img = new Image();
+	img.onload = function () {
+		ctx.drawImage(img,100,100);
+	}
+	img.src = 'images/sprites.png';
 }
