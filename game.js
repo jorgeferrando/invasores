@@ -9,17 +9,18 @@ if (!ctx) {
 }
 
 function startGame() {
-	//yellow rectangle 
-	ctx.fillStyle = "#FFFF00";
-	ctx.fillRect(50,100,380,400);
-
-	//blue semitransparent rectangle
-	ctx.fillStyle = "rgba(0,0,128,0.5)";
-	ctx.fillRect(0,50,380,400);
-
-	var img = new Image();
-	img.onload = function () {
-		ctx.drawImage(img,100,100);
-	}
-	img.src = 'images/sprites.png';
+	var ss = new SpriteSheet();
+	ss.load({
+		ship: {
+			sx: 0,
+			sy: 0,
+			w: 37,
+			h: 42,
+			frames: 1
+		}
+	}, function () {
+		ss.draw(ctx,"ship",0,0);
+		ss.draw(ctx,"ship",100,50);
+		ss.draw(ctx,"ship",150,100);
+	});
 }
