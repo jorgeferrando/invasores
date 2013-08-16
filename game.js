@@ -1,26 +1,18 @@
-var canvas = document.getElementById('game');
-var ctx = canvas.getContext && canvas.getContext('2d');
+var sprites = {
+	ship: {
+		sx: 0,
+		sy: 0,
+		w: 37,
+		h: 42,
+		frames: 1
+	}
+};
 
-if (!ctx) {
-	//No 2d context available
-	alert('Please, update your browser');
-} else {
-	startGame();
-}
+var startGame = function() {
+	SpriteSheet.draw(Game.ctx, "ship", 100, 100, 0);
+};
 
-function startGame() {
-	var ss = new SpriteSheet();
-	ss.load({
-		ship: {
-			sx: 0,
-			sy: 0,
-			w: 37,
-			h: 42,
-			frames: 1
-		}
-	}, function () {
-		ss.draw(ctx,"ship",0,0);
-		ss.draw(ctx,"ship",100,50);
-		ss.draw(ctx,"ship",150,100);
-	});
-}
+window.addEventListener("load", function() {
+	Game.initialize("game", sprites, startGame);
+
+});
