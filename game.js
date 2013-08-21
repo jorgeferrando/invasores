@@ -19,9 +19,36 @@ var startGame = function() {
 };
 
 var playGame = function() {
-	Game.setBoard(3, new TitleScreen(
-		"Alien Invasion",
-		"Game Started..."));
+	Game.setBoard(3, new playerShip());
+};
+
+var playerShip = function() {
+	this.w = SpriteSheet.map['ship'].w;
+	this.h = SpriteSheet.map['ship'].h;
+	this.x = Game.width / 2 - this.w / 2;
+	this.y = Game.height - 10 - this.h;
+	this.vx = 0;
+	this.maxLevel = 200;
+	this.step = function(dt) {
+		if (Game.keys['left']) {
+			this.vx = -this.maxLevel;
+		} else if (Game.keys['right']) {
+			this.vx = this.maxLevel;
+		} else {
+			maxLevel = 0;
+		}
+
+		this.x += this.vx * dt;
+		
+		if (this.x < 0) {
+			this.x = 0;
+		} else if (this.x > Game.width - this.w) {
+			this.x = Game.width - this.w;
+		}
+	};
+	this.draw = function(ctx) {
+		SpriteSheet.draw(ctx, 'ship', this.x, this.y, 0);
+	};
 };
 
 window.addEventListener("load", function() {
