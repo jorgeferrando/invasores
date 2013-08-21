@@ -154,11 +154,26 @@ var GameBoard = function() {
 		return false;
 	};
 
+	this.overlap = function(o1, o2) {
+		return !((o1.y + o1.h - 1 < o2.y) || (o1.y > o2.y + o2.h - 1) ||
+			(o1.x + o1.w - 1 < o2.x) || (o1.x > o2.x + o2.w - 1));
+	};
+
+	this.collide = function (obj,type) {
+		return this.detect(function() {
+			if (obj != this) {
+				var col = (!type || this.type & type) && board.overlap(obj,this);
+				return col ? this : false;
+			}
+		});
+	}
+
 	this.step = function(dt) {
 		this.resetRemoved();
 		this.iterate('step', dt);
 		this.finalizeRemoved();
 	};
+
 	this.draw = function(ctx) {
 		this.iterate('draw', ctx);
 	};

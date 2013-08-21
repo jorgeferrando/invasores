@@ -19,7 +19,9 @@ var startGame = function() {
 };
 
 var playGame = function() {
-	Game.setBoard(3, new playerShip());
+	var board = new GameBoard();
+	board.add(new playerShip());
+	Game.setBoard(3, board);
 };
 
 var playerShip = function() {
