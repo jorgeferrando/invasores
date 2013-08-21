@@ -1,30 +1,3 @@
-var SpriteSheet = (function() {
-	var that = this;
-	that.map = {};
-	that.load = function(spriteData, callback) {
-		that.map = spriteData;
-		that.image = new Image();
-		that.image.onload = callback;
-		that.image.src = 'images/sprites.png';
-	};
-	that.draw = function(ctx, sprite, x, y, frame) {
-		var s = this.map[sprite];
-		if (!frame) {
-			frame = 0;
-		}
-		ctx.drawImage(this.image,
-			s.sx + frame * s.w,
-			s.sy,
-			s.w,
-			s.h,
-			Math.floor(x),
-			Math.floor(y),
-			s.w,
-			s.h);
-	};
-	return that;
-})();
-
 var Game = (function() {
 	var KEY_CODES = {
 		37: 'left',
@@ -84,6 +57,33 @@ var Game = (function() {
 		boards[num] = board;
 	};
 	return this;
+})();
+
+var SpriteSheet = (function() {
+	var that = this;
+	that.map = {};
+	that.load = function(spriteData, callback) {
+		that.map = spriteData;
+		that.image = new Image();
+		that.image.onload = callback;
+		that.image.src = 'images/sprites.png';
+	};
+	that.draw = function(ctx, sprite, x, y, frame) {
+		var s = this.map[sprite];
+		if (!frame) {
+			frame = 0;
+		}
+		ctx.drawImage(this.image,
+			s.sx + frame * s.w,
+			s.sy,
+			s.w,
+			s.h,
+			Math.floor(x),
+			Math.floor(y),
+			s.w,
+			s.h);
+	};
+	return that;
 })();
 
 var TitleScreen = function(title, subtitle, callback) {
@@ -166,7 +166,7 @@ var GameBoard = function() {
 				return col ? this : false;
 			}
 		});
-	}
+	};
 
 	this.step = function(dt) {
 		this.resetRemoved();

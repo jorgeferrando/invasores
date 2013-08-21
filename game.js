@@ -5,6 +5,13 @@ var sprites = {
 		w: 37,
 		h: 42,
 		frames: 1
+	},
+	missile: {
+		sx: 0,
+		sy: 30,
+		w: 2,
+		h: 10,
+		fames: 1
 	}
 };
 
@@ -22,35 +29,6 @@ var playGame = function() {
 	var board = new GameBoard();
 	board.add(new playerShip());
 	Game.setBoard(3, board);
-};
-
-var playerShip = function() {
-	this.w = SpriteSheet.map['ship'].w;
-	this.h = SpriteSheet.map['ship'].h;
-	this.x = Game.width / 2 - this.w / 2;
-	this.y = Game.height - 10 - this.h;
-	this.vx = 0;
-	this.maxLevel = 200;
-	this.step = function(dt) {
-		if (Game.keys['left']) {
-			this.vx = -this.maxLevel;
-		} else if (Game.keys['right']) {
-			this.vx = this.maxLevel;
-		} else {
-			maxLevel = 0;
-		}
-
-		this.x += this.vx * dt;
-		
-		if (this.x < 0) {
-			this.x = 0;
-		} else if (this.x > Game.width - this.w) {
-			this.x = Game.width - this.w;
-		}
-	};
-	this.draw = function(ctx) {
-		SpriteSheet.draw(ctx, 'ship', this.x, this.y, 0);
-	};
 };
 
 window.addEventListener("load", function() {
@@ -116,4 +94,62 @@ var Starfield = function(speed, opacity, numStars, shouldBeClear) {
 		offset += dt * speed;
 		offset = offset % stars.height;
 	};
+};
+
+var playerShip = function() {
+	this.w = SpriteSheet.map['ship'].w;
+	this.h = SpriteSheet.map['ship'].h;
+	this.x = Game.width / 2 - this.w / 2;
+	this.y = Game.height - 10 - this.h;
+	this.vx = 0;
+	this.maxVel = 200;
+	this.reloadTime = 0.25;
+	this.reload = this.reloadTime;
+	this.step = function(dt) {
+		if (Game.keys['left']) {
+			this.vx = -this.maxVel;
+		} else if (Game.keys['right']) {
+			this.vx = this.maxVel;
+		} else {
+			this.vx = 0;
+		}
+
+		this.x += this.vx * dt;
+
+		if (this.x < 0) {
+			this.x = 0;
+		} else if (this.x > Game.width - this.w) {
+			this.x = Game.width - this.w;
+		}
+
+		this.reload -= dt;
+		if (Game.keys['fire'] && this.reload < 0) {
+			Game.keys['fire'] = false;
+			this.reload = this.reloadTime;
+			this.board.add(new PlayerMissile(this.x,this.y+this.h/2));
+			this.board.add(new PlayerMissile(this.x+this.w,this.y+this.h/2));
+		}
+	};
+	this.draw = function(ctx) {
+		SpriteSheet.draw(ctx, 'ship', this.x, this.y, 0);
+	};
+};
+
+var PlayerMissile = function(x,y) {
+	this.w = SpriteSheet.map['missile'].w;
+	this.h = SpriteSheet.map['missile'].h;
+	this.x = x - this.w/2;
+	this.y = y - this.h;
+	this.vy = -700;
+};
+
+PlayerMissile.prototype.step = function (dt) {
+	this.y += this.vy * dt;
+	if (this.y < this.h) {
+		this.board.remove(this);
+	}
+};
+
+PlayerMissile.prototype.draw = function (ctx) {
+	SpriteSheet.draw(ctx,'missile',this.x,this.y);
 };
