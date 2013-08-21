@@ -12,6 +12,16 @@ var startGame = function() {
 	Game.setBoard(0, new Starfield(20, 0.4, 200, true));
 	Game.setBoard(1, new Starfield(50, 0.6, 100));
 	Game.setBoard(2, new Starfield(100, 1.0, 50));
+	Game.setBoard(3, new TitleScreen(
+		"Alien Invasion",
+		"Press space to start",
+		playGame));
+};
+
+var playGame = function() {
+	Game.setBoard(3, new TitleScreen(
+		"Alien Invasion",
+		"Game Started..."));
 };
 
 window.addEventListener("load", function() {
