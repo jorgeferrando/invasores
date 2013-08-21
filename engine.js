@@ -88,16 +88,78 @@ var Game = (function() {
 
 var TitleScreen = function(title, subtitle, callback) {
 	this.step = function(dt) {
-		if(Game.keys['fire'] && callback) {
+		if (Game.keys['fire'] && callback) {
 			callback();
 		}
 	};
 	this.draw = function(ctx) {
-		ctx.fillStyle="#FFF";
+		ctx.fillStyle = "#FFF";
 		ctx.textAlign = "center";
 		ctx.font = "bold 40px bangers";
-		ctx.fillText(title,Game.width/2,Game.height/2);
+		ctx.fillText(title, Game.width / 2, Game.height / 2);
 		ctx.font = "bold 20px bangers";
-		ctx.fillText(subtitle,Game.width/2,Game.height/2+40);
+		ctx.fillText(subtitle, Game.width / 2, Game.height / 2 + 40);
+	};
+};
+
+var GameBoard = function() {
+	var board = this;
+	this.objects = [];
+	this.removed = [];
+	this.cnt = [];
+
+	this.add = function(obj) {
+		obj.board = this;
+		this.objects.push(obj);
+		this.cnt[obj.type] = (this.cnt[obj.type] || 0) + 1;
+		return obj;
+	};
+
+	this.remove = function(obj) {
+		var wasStillAlive = this.removed.indexOf(obj) != -1;
+		if (wasStillAlive) {
+			this.removed.push(obj);
+		}
+		return wasStillAlive;
+	};
+
+	this.resetRemoved = function() {
+		this.removed = [];
+	};
+
+	this.finalizeRemoved = function() {
+		for (var i = 0, len = this.removed.length; i < len; i++) {
+			var idx = this.objects.indexOf(this.removed[i]);
+			if (idx != -1) {
+				this.cnt[this.removed[i].type]--;
+				this.objects.splice(idx, 1);
+			}
+		}
+	};
+
+	this.iterate = function(funcName) {
+		var args = Array.prototype.slice.call(arguments, 1);
+		for (var i = 0, len = this.objects.length; i < len; i++) {
+			var obj = this.objects[i];
+			obj[funcName].apply(obj, args);
+		}
+	};
+
+	this.detect = function(func) {
+		for (var i = 0, val = null, len = this.objects.length; i < len; i++) {
+			if (func.call(this.objects[i])) {
+				return this.objects[i];
+			}
+		}
+		return false;
+	};
+
+	this.step = function(dt) {
+		this.resetRemoved();
+		this.iterate('step', dt);
+		this.finalizeRemoved();
+	};
+	this.draw = function(ctx) {
+		this.iterate('draw', ctx);
 	};
 };
