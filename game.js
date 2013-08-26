@@ -11,7 +11,46 @@ var sprites = {
 		sy: 30,
 		w: 2,
 		h: 10,
-		fames: 1
+		frames: 1
+	},
+	enemy_purple: {
+		sx: 37,
+		sy: 0,
+		w: 42,
+		h: 43,
+		frames: 1
+	},
+	enemy_bee: {
+		sx: 79,
+		sy: 0,
+		w: 37,
+		h: 43,
+		frames: 1
+	},
+	enemy_ship: {
+		sx: 116,
+		sy: 0,
+		w: 42,
+		h: 43,
+		frames: 1
+	},
+	enemy_circle: {
+		sx: 158,
+		sy: 0,
+		w: 32,
+		h: 33,
+		frames: 1
+	}
+};
+
+var enemies = {
+	basic: {
+		x: 100,
+		y: -50,
+		sprite: 'enemy_purple',
+		B: 100,
+		C: 2,
+		E: 100
 	}
 };
 
@@ -27,6 +66,10 @@ var startGame = function() {
 
 var playGame = function() {
 	var board = new GameBoard();
+	board.add(new Enemy(enemies.basic));
+	board.add(new Enemy(enemies.basic, {
+		x: 200
+	}));
 	board.add(new playerShip());
 	Game.setBoard(3, board);
 };
@@ -126,8 +169,8 @@ var playerShip = function() {
 		if (Game.keys['fire'] && this.reload < 0) {
 			Game.keys['fire'] = false;
 			this.reload = this.reloadTime;
-			this.board.add(new PlayerMissile(this.x,this.y+this.h/2));
-			this.board.add(new PlayerMissile(this.x+this.w,this.y+this.h/2));
+			this.board.add(new PlayerMissile(this.x, this.y + this.h / 2));
+			this.board.add(new PlayerMissile(this.x + this.w, this.y + this.h / 2));
 		}
 	};
 	this.draw = function(ctx) {
@@ -135,21 +178,72 @@ var playerShip = function() {
 	};
 };
 
-var PlayerMissile = function(x,y) {
+var PlayerMissile = function(x, y) {
 	this.w = SpriteSheet.map['missile'].w;
 	this.h = SpriteSheet.map['missile'].h;
-	this.x = x - this.w/2;
+	this.x = x - this.w / 2;
 	this.y = y - this.h;
 	this.vy = -700;
 };
 
-PlayerMissile.prototype.step = function (dt) {
+PlayerMissile.prototype.step = function(dt) {
 	this.y += this.vy * dt;
 	if (this.y < this.h) {
 		this.board.remove(this);
 	}
 };
 
-PlayerMissile.prototype.draw = function (ctx) {
-	SpriteSheet.draw(ctx,'missile',this.x,this.y);
+PlayerMissile.prototype.draw = function(ctx) {
+	SpriteSheet.draw(ctx, 'missile', this.x, this.y);
+};
+
+var Enemy = function(blueprint, override) {
+	// A -> Constant horizontal velocity
+	// B -> Strength of horizontal sinusoidal velocity
+	// C -> Period of horizontal sinusoidal velocity
+	// D -> Time shift of horizontal sinusoidal velocity
+	// E -> Constant vertical velocity
+	// F -> Strength of Vertical sinusoidal velocity
+	// G -> Period of vertical sinusoidal velocity:
+	// Vx = A + B * sin(C * t + D)
+	// Vy = E + F * sin(G * t + H)
+	var baseParameters = {
+		A: 0,
+		B: 0,
+		C: 0,
+		D: 0,
+		E: 0,
+		F: 0,
+		G: 0,
+		H: 0
+	};
+	for (var prop in baseParameters) {
+		this[prop] = baseParameters[prop];
+	}
+	for (prop in blueprint) {
+		this[prop] = blueprint[prop];
+	}
+	if (override) {
+		for (prop in override) {
+			this[prop] = override[prop];
+		}
+	}
+	this.w = SpriteSheet.map[this.sprite].w;
+	this.h = SpriteSheet.map[this.sprite].h;
+	this.t = 0;
+};
+
+Enemy.prototype.step = function(dt) {
+	this.t += dt;
+	this.vx = this.A + this.B + Math.sin(this.C * this.t + this.D);
+	this.vy = this.E + this.F + Math.sin(this.G * this.t + this.H);
+	this.x += this.vx * dt;
+	this.y += this.vy * dt;
+	if (this.y > Game.height || this.x < -this.w || this.x > Game.width) {
+		this.board.remove(this);
+	}
+};
+
+Enemy.prototype.draw = function(ctx) {
+	SpriteSheet.draw(ctx, this.sprite, this.x, this.y);
 };
