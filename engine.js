@@ -105,6 +105,9 @@ Sprite.prototype.merge = function(props) {
 Sprite.prototype.draw = function(ctx) {
 	SpriteSheet.draw(ctx, this.sprite, this.x, this.y, this.frame);
 };
+Sprite.prototype.hit = function(damage) {
+	this.board.remove(this);
+};
 
 var TitleScreen = function(title, subtitle, callback) {
 	this.step = function(dt) {
@@ -136,11 +139,7 @@ var GameBoard = function() {
 	};
 
 	this.remove = function(obj) {
-		var wasStillAlive = this.removed.indexOf(obj) != -1;
-		if (wasStillAlive) {
-			this.removed.push(obj);
-		}
-		return wasStillAlive;
+		return this.removed.push(obj);
 	};
 
 	this.resetRemoved = function() {

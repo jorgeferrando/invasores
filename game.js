@@ -40,6 +40,13 @@ var sprites = {
 		w: 32,
 		h: 33,
 		frames: 1
+	},
+	explosion: {
+		sx: 0,
+		sy: 64,
+		w: 64,
+		h: 64,
+		frames: 12
 	}
 };
 
@@ -50,9 +57,16 @@ var enemies = {
 		sprite: 'enemy_purple',
 		B: 100,
 		C: 2,
-		E: 100
+		E: 100,
+		health: 20
 	}
 };
+
+var OBJECT_PLAYER = 1,
+	OBJECT_PLAYER_PROJECTILE = 2,
+	OBJECT_ENEMY = 4,
+	OBJECT_ENEMY_PROJECTILE = 8,
+	OBJECT_POWERUP = 16;
 
 var startGame = function() {
 	Game.setBoard(0, new Starfield(20, 0.4, 200, true));
@@ -68,9 +82,9 @@ var playGame = function() {
 	var board = new GameBoard();
 	board.add(new Enemy(enemies.basic));
 	board.add(new Enemy(enemies.basic, {
-		x: 200
+		x: 150
 	}));
-	board.add(new playerShip());
+	board.add(new PlayerShip());
 	Game.setBoard(3, board);
 };
 
@@ -177,17 +191,26 @@ var PlayerShip = function() {
 		}
 	};
 };
-playerShip.prototype = new Sprite();
+PlayerShip.prototype = new Sprite();
+PlayerShip.prototype.type = OBJECT_PLAYER;
 
 var PlayerMissile = function(x, y) {
-	this.setup('missile',{vy:-700});
+	this.setup('missile', {
+		vy: -700,
+		damage: 10
+	});
 	this.x = x - this.w / 2;
 	this.y = y - this.h;
 };
 PlayerMissile.prototype = new Sprite();
+PlayerMissile.prototype.type = OBJECT_PLAYER_PROJECTILE;
 PlayerMissile.prototype.step = function(dt) {
 	this.y += this.vy * dt;
-	if (this.y < this.h) {
+	var collision = this.board.collide(this, OBJECT_ENEMY);
+	if (collision) {
+		collision.hit(this.damage);
+		this.board.remove(this);
+	} else if (this.y < -this.h) {
 		this.board.remove(this);
 	}
 };
@@ -198,39 +221,75 @@ PlayerMissile.prototype.draw = function(ctx) {
 
 var Enemy = function(blueprint, override) {
 	this.merge(this.baseParameters);
-	this.setup(blueprint.sprite,blueprint);
+	this.setup(blueprint.sprite, blueprint);
 	this.merge(override);
 };
-	// A -> Constant horizontal velocity
-	// B -> Strength of horizontal sinusoidal velocity
-	// C -> Period of horizontal sinusoidal velocity
-	// D -> Time shift of horizontal sinusoidal velocity
-	// E -> Constant vertical velocity
-	// F -> Strength of Vertical sinusoidal velocity
-	// G -> Period of vertical sinusoidal velocity:
-	// Vx = A + B * sin(C * t + D)
-	// Vy = E + F * sin(G * t + H)
+Enemy.prototype = new Sprite();
+Enemy.prototype.type = OBJECT_ENEMY;
+// A -> Constant horizontal velocity
+// B -> Strength of horizontal sinusoidal velocity
+// C -> Period of horizontal sinusoidal velocity
+// D -> Time shift of horizontal sinusoidal velocity
+// E -> Constant vertical velocity
+// F -> Strength of Vertical sinusoidal velocity
+// G -> Period of vertical sinusoidal velocity:
+// Vx = A + B * sin(C * t + D)
+// Vy = E + F * sin(G * t + H)
 Enemy.prototype.baseParameters = {
-		A: 0,
-		B: 0,
-		C: 0,
-		D: 0,
-		E: 0,
-		F: 0,
-		G: 0,
-		H: 0
-	};
+	A: 0,
+	B: 0,
+	C: 0,
+	D: 0,
+	E: 0,
+	F: 0,
+	G: 0,
+	H: 0,
+	t: 0
+};
 Enemy.prototype.step = function(dt) {
 	this.t += dt;
-	this.vx = this.A + this.B + Math.sin(this.C * this.t + this.D);
-	this.vy = this.E + this.F + Math.sin(this.G * this.t + this.H);
+
+	this.vx = this.A + this.B * Math.sin(this.C * this.t + this.D);
+	this.vy = this.E + this.F * Math.sin(this.G * this.t + this.H);
+
 	this.x += this.vx * dt;
 	this.y += this.vy * dt;
-	if (this.y > Game.height || this.x < -this.w || this.x > Game.width) {
+
+	var collision = this.board.collide(this, OBJECT_PLAYER);
+	if (collision) {
+		collision.hit(this.damage);
+		this.board.remove(this);
+	}
+
+	if (this.y > Game.height ||
+		this.x < -this.w ||
+		this.x > Game.width) {
 		this.board.remove(this);
 	}
 };
+Enemy.prototype.hit = function(damage) {
+	console.log(this.health);
+	this.health -= damage;
+	if (this.health <= 0) {
+		if (this.board.remove(this)) {
+			this.board.add(new Explosion(this.x + this.w / 2, this.y + this.h / 2));
+		}
+	}
+};
 
-Enemy.prototype.draw = function(ctx) {
-	SpriteSheet.draw(ctx, this.sprite, this.x, this.y);
+var Explosion = function(centerX, centerY) {
+	this.setup('explosion', {
+		frame: 0
+	});
+	this.x = centerX - this.w / 2;
+	this.y = centerY - this.h / 2;
+};
+
+Explosion.prototype = new Sprite();
+
+Explosion.prototype.step = function(dt) {
+	this.frame++;
+	if (this.frame >= 12) {
+		this.board.remove(this);
+	}
 };
