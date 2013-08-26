@@ -86,6 +86,26 @@ var SpriteSheet = (function() {
 	return that;
 })();
 
+
+var Sprite = function() {};
+Sprite.prototype.setup = function(sprite, props) {
+	this.sprite = sprite;
+	this.merge(props);
+	this.frame = this.frame || 0;
+	this.w = SpriteSheet.map[sprite].w;
+	this.h = SpriteSheet.map[sprite].h;
+};
+Sprite.prototype.merge = function(props) {
+	if (props) {
+		for (var prop in props) {
+			this[prop] = props[prop];
+		}
+	}
+};
+Sprite.prototype.draw = function(ctx) {
+	SpriteSheet.draw(ctx, this.sprite, this.x, this.y, this.frame);
+};
+
 var TitleScreen = function(title, subtitle, callback) {
 	this.step = function(dt) {
 		if (Game.keys['fire'] && callback) {
@@ -159,10 +179,10 @@ var GameBoard = function() {
 			(o1.x + o1.w - 1 < o2.x) || (o1.x > o2.x + o2.w - 1));
 	};
 
-	this.collide = function (obj,type) {
+	this.collide = function(obj, type) {
 		return this.detect(function() {
 			if (obj != this) {
-				var col = (!type || this.type & type) && board.overlap(obj,this);
+				var col = (!type || this.type & type) && board.overlap(obj, this);
 				return col ? this : false;
 			}
 		});

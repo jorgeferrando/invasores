@@ -139,15 +139,17 @@ var Starfield = function(speed, opacity, numStars, shouldBeClear) {
 	};
 };
 
-var playerShip = function() {
-	this.w = SpriteSheet.map['ship'].w;
-	this.h = SpriteSheet.map['ship'].h;
+var PlayerShip = function() {
+	this.setup('ship', {
+		vx: 0,
+		reloadTime: 0.25,
+		maxVel: 200
+	});
+
+	this.reload = this.reloadTime;
 	this.x = Game.width / 2 - this.w / 2;
 	this.y = Game.height - 10 - this.h;
-	this.vx = 0;
-	this.maxVel = 200;
-	this.reloadTime = 0.25;
-	this.reload = this.reloadTime;
+
 	this.step = function(dt) {
 		if (Game.keys['left']) {
 			this.vx = -this.maxVel;
@@ -169,23 +171,20 @@ var playerShip = function() {
 		if (Game.keys['fire'] && this.reload < 0) {
 			Game.keys['fire'] = false;
 			this.reload = this.reloadTime;
+
 			this.board.add(new PlayerMissile(this.x, this.y + this.h / 2));
 			this.board.add(new PlayerMissile(this.x + this.w, this.y + this.h / 2));
 		}
 	};
-	this.draw = function(ctx) {
-		SpriteSheet.draw(ctx, 'ship', this.x, this.y, 0);
-	};
 };
+playerShip.prototype = new Sprite();
 
 var PlayerMissile = function(x, y) {
-	this.w = SpriteSheet.map['missile'].w;
-	this.h = SpriteSheet.map['missile'].h;
+	this.setup('missile',{vy:-700});
 	this.x = x - this.w / 2;
 	this.y = y - this.h;
-	this.vy = -700;
 };
-
+PlayerMissile.prototype = new Sprite();
 PlayerMissile.prototype.step = function(dt) {
 	this.y += this.vy * dt;
 	if (this.y < this.h) {
@@ -198,6 +197,10 @@ PlayerMissile.prototype.draw = function(ctx) {
 };
 
 var Enemy = function(blueprint, override) {
+	this.merge(this.baseParameters);
+	this.setup(blueprint.sprite,blueprint);
+	this.merge(override);
+};
 	// A -> Constant horizontal velocity
 	// B -> Strength of horizontal sinusoidal velocity
 	// C -> Period of horizontal sinusoidal velocity
@@ -207,7 +210,7 @@ var Enemy = function(blueprint, override) {
 	// G -> Period of vertical sinusoidal velocity:
 	// Vx = A + B * sin(C * t + D)
 	// Vy = E + F * sin(G * t + H)
-	var baseParameters = {
+Enemy.prototype.baseParameters = {
 		A: 0,
 		B: 0,
 		C: 0,
@@ -217,22 +220,6 @@ var Enemy = function(blueprint, override) {
 		G: 0,
 		H: 0
 	};
-	for (var prop in baseParameters) {
-		this[prop] = baseParameters[prop];
-	}
-	for (prop in blueprint) {
-		this[prop] = blueprint[prop];
-	}
-	if (override) {
-		for (prop in override) {
-			this[prop] = override[prop];
-		}
-	}
-	this.w = SpriteSheet.map[this.sprite].w;
-	this.h = SpriteSheet.map[this.sprite].h;
-	this.t = 0;
-};
-
 Enemy.prototype.step = function(dt) {
 	this.t += dt;
 	this.vx = this.A + this.B + Math.sin(this.C * this.t + this.D);
